@@ -6,7 +6,9 @@ export default function DomainSelector() {
 
   useEffect(() => {
     const savedDomain = localStorage.getItem('domain')
-    if (savedDomain) setDomain(savedDomain)
+    if (savedDomain) {
+      setDomain(savedDomain)
+    }
   }, [])
 
   return (
@@ -18,7 +20,7 @@ export default function DomainSelector() {
             setDomain(d)
             localStorage.setItem('domain', d)
           }}
-          className={\`px-4 py-2 rounded-xl \${domain === d ? 'bg-black text-white' : 'bg-gray-200'}\`}
+          className={`px-4 py-2 rounded-xl ${domain === d ? 'bg-black text-white' : 'bg-gray-200'}`}
         >
           {d.charAt(0).toUpperCase() + d.slice(1)}
         </button>
