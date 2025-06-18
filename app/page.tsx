@@ -1,5 +1,5 @@
-import DomainSelector from './components/DomainSelector'
-import ChatInterface from './components/ChatInterface'
+import DomainSelector from '../components/DomainSelector'
+import ChatInterface from '../components/ChatInterface'
 
 export default function Home() {
   return (
