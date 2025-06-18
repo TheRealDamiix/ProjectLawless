@@ -1,7 +1,6 @@
 import OpenAI from 'openai';
 
-// This line now safely loads your key from your Vercel environment variables
-// or your local .env.local file for development.
+// This line now safely loads your key from your Vercel environment variables.
 const openai = new OpenAI({
   apiKey: import.meta.env.VITE_OPENAI_API_KEY,
   dangerouslyAllowBrowser: true
