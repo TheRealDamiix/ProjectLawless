@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "app/page.tsx",
+      "use": "@vercel/next"
+    }
+  ],
+  "framework": "nextjs"
+}
