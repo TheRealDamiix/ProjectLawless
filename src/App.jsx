@@ -1,3 +1,4 @@
+// /src/App.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Brain, Zap, Database, AlertTriangle } from 'lucide-react';
@@ -9,7 +10,7 @@ import DomainSelector from '@/components/DomainSelector';
 import ChatMessage from '@/components/ChatMessage';
 import ChatInput from '@/components/ChatInput';
 import TypingIndicator from '@/components/TypingIndicator';
-import { generateAIResponse } from '@/services/openai';
+import { generateAIResponse } from '@/services/ai';
 import { saveConversation, loadConversations, deleteConversation, testConnection } from '@/services/supabase';
 
 const App = () => {
