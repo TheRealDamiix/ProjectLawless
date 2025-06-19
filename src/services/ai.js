@@ -1,48 +1,32 @@
-// /api/generate.js
+// /src/services/ai.js
 
-export default async function handler(request, response) {
-  // We only want to handle POST requests to this endpoint
-  if (request.method !== 'POST') {
-    return response.status(405).json({ error: 'Method Not Allowed' });
-  }
-
+export const generateAIResponse = async (message, domain, conversationHistory = []) => {
   try {
-    const { message, conversationHistory } = await request.json();
-
-    // Prepare the conversation in the format OpenRouter expects
-    const messages = conversationHistory.map(msg => ({
-      role: msg.isUser ? 'user' : 'assistant',
-      content: msg.text,
-    }));
-    messages.push({ role: 'user', content: message });
-
-
-    const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
+    // We are calling our own API route, which is /api/generate
+    const response = await fetch('/api/generate', {
+      method: 'POST',
       headers: {
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`, // Remember to add OPENROUTER_API_KEY to your environment variables
-        "Content-Type": "application/json"
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        "model": "huggingfaceh4/zephyr-7b-beta", // Using a Hugging Face model via OpenRouter
-        "messages": messages
-      })
+        message,
+        domain, // Domain is still sent and can be used to customize prompts server-side if needed
+        conversationHistory: conversationHistory.slice(-10), // Send the recent history
+      }),
     });
 
-    if (!openRouterResponse.ok) {
-      const errorBody = await openRouterResponse.json();
-      console.error("OpenRouter API Error:", errorBody);
-      const errorMessage = errorBody.error?.message || "Failed to get response from OpenRouter.";
-      return response.status(openRouterResponse.status).json({ error: errorMessage });
+    if (!response.ok) {
+      const errorData = await response.json();
+      // Throw an error with the message from our serverless function
+      throw new Error(errorData.error || 'The AI service failed to respond.');
     }
 
-    const data = await openRouterResponse.json();
-    const generatedText = data.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
-
-    response.status(200).json({ result: generatedText });
+    const data = await response.json();
+    return data.result; // Return the AI's generated text
 
   } catch (error) {
-    console.error('API Route Error:', error);
-    response.status(500).json({ error: 'Internal server error.' });
+    console.error('Error fetching from /api/generate:', error);
+    // Re-throw the error so the UI can catch it and display a message
+    throw error;
   }
-}
+};
