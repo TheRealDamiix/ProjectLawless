@@ -7,6 +7,9 @@ export default async function handler(request, response) {
   }
 
   try {
+    // Log environment variables (redacted for security)
+    console.log("API Key exists:", !!process.env.OPENROUTER_API_KEY);
+    
     const { message, conversationHistory } = await request.json();
 
     // Prepare the conversation in the format OpenRouter expects
@@ -43,6 +46,11 @@ export default async function handler(request, response) {
 
   } catch (error) {
     console.error('API Route Error:', error);
-    response.status(500).json({ error: 'Internal server error.' });
+    // More detailed error response
+    response.status(500).json({ 
+      error: 'Internal server error.', 
+      details: error.message,
+      stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
+    });
   }
 }
