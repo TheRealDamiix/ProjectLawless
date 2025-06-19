@@ -1,5 +1,4 @@
-// This is a secure, server-side function.
-// It will run on Vercel's servers, not in the user's browser.
+// /api/generate.js
 
 export default async function handler(request, response) {
   // We only want to handle POST requests to this endpoint
@@ -10,48 +9,35 @@ export default async function handler(request, response) {
   try {
     const { message, conversationHistory } = await request.json();
 
-    // Prepare the conversation in the format Hugging Face expects
-    const formattedHistory = conversationHistory.map(msg => ({
+    // Prepare the conversation in the format OpenRouter expects
+    const messages = conversationHistory.map(msg => ({
       role: msg.isUser ? 'user' : 'assistant',
       content: msg.text,
     }));
+    messages.push({ role: 'user', content: message });
 
-    const payload = {
-      inputs: {
-        past_user_inputs: formattedHistory.filter(m => m.role === 'user').map(m => m.content),
-        generated_responses: formattedHistory.filter(m => m.role === 'assistant').map(m => m.content),
-        text: message
+
+    const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`, // Remember to add OPENROUTER_API_KEY to your environment variables
+        "Content-Type": "application/json"
       },
-      parameters: {
-        return_full_text: false,
-        max_new_tokens: 500,
-      }
-    };
-    
-    const hfResponse = await fetch(
-      // Using a powerful, free conversational model
-      "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2",
-      {
-        headers: {
-          "Accept": "application/json",
-          "Authorization": `Bearer ${process.env.HUGGINGFACE_API_KEY}`, // Securely using the environment variable
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        body: JSON.stringify(payload),
-      }
-    );
+      body: JSON.stringify({
+        "model": "huggingfaceh4/zephyr-7b-beta", // Using a Hugging Face model via OpenRouter
+        "messages": messages
+      })
+    });
 
-    if (!hfResponse.ok) {
-        const errorBody = await hfResponse.json();
-        console.error("Hugging Face API Error:", errorBody);
-        const errorMessage = errorBody.error || "Failed to get response from Hugging Face.";
-        return response.status(hfResponse.status).json({ error: errorMessage });
+    if (!openRouterResponse.ok) {
+      const errorBody = await openRouterResponse.json();
+      console.error("OpenRouter API Error:", errorBody);
+      const errorMessage = errorBody.error?.message || "Failed to get response from OpenRouter.";
+      return response.status(openRouterResponse.status).json({ error: errorMessage });
     }
 
-    const data = await hfResponse.json();
-    // The response is an array, we get the generated text from the first item
-    const generatedText = data[0]?.generated_text || "I'm sorry, I couldn't generate a response.";
+    const data = await openRouterResponse.json();
+    const generatedText = data.choices[0]?.message?.content || "I'm sorry, I couldn't generate a response.";
 
     response.status(200).json({ result: generatedText });
 
