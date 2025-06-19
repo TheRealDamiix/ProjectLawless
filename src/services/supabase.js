@@ -4,7 +4,22 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+// Log environment variable status (without exposing actual values)
+console.log('Supabase URL exists:', !!supabaseUrl);
+console.log('Supabase Key exists:', !!supabaseKey);
+
+// Create client with fallback for development
+let supabase = null;
+try {
+  if (supabaseUrl && supabaseKey) {
+    supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('Supabase client created successfully');
+  } else {
+    console.warn('Missing Supabase credentials. Using localStorage fallback only.');
+  }
+} catch (error) {
+  console.error('Error creating Supabase client:', error);
+}
 
 export const saveConversation = async (conversation) => {
   try {
