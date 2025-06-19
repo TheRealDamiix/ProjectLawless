@@ -35,6 +35,33 @@ const App = () => {
     // Test Supabase connection and load conversations
     const initializeApp = async () => {
       try {
+        // Check if environment variables are available
+        const envVarsAvailable = !!import.meta.env.VITE_SUPABASE_URL && 
+                                !!import.meta.env.VITE_SUPABASE_ANON_KEY;
+        
+        if (!envVarsAvailable) {
+          console.warn('Supabase environment variables are missing');
+          toast({
+            title: "Local Mode Active",
+            description: "Running with local storage only. Your data won't be synced.",
+            variant: "warning"
+          });
+          setSupabaseConnected(false);
+          
+          // Still try to load from localStorage
+          const localConversations = JSON.parse(localStorage.getItem('lawless-conversations') || '[]');
+          setConversations(localConversations);
+          
+          if (localConversations.length > 0) {
+            const firstConversation = localConversations[0];
+            setActiveConversation(firstConversation.id);
+            setMessages(firstConversation.messages || []);
+            setSelectedDomain(firstConversation.domain || 'legal');
+          }
+          return;
+        }
+        
+        // Test connection if env vars are available
         const connected = await testConnection();
         setSupabaseConnected(connected);
         
@@ -42,6 +69,12 @@ const App = () => {
           toast({
             title: "Database Connected! 🚀",
             description: "Your conversations are now synced across all devices.",
+          });
+        } else {
+          toast({
+            title: "Local Mode Active",
+            description: "Database connection failed. Your data won't be synced.",
+            variant: "warning"
           });
         }
 
@@ -57,6 +90,11 @@ const App = () => {
       } catch (error) {
         console.error('Error initializing app:', error);
         setSupabaseConnected(false);
+        toast({
+          title: "Error Connecting",
+          description: "Failed to initialize app: " + error.message,
+          variant: "destructive"
+        });
       }
     };
     
